@@ -1,8 +1,22 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 import PageBreadCrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import SmartDashboard from "../../components/smartview/dashboard/SmartDashboard";
+import { useSmartView } from "../../context/SmartViewContext";
 
 export default function SmartDashboardPage() {
+  const { currentDataset } = useSmartView();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!currentDataset) {
+      navigate("/upload", { replace: true });
+    }
+  }, [currentDataset, navigate]);
+
+  if (!currentDataset) return null;
+
   return (
     <>
       <PageMeta

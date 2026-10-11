@@ -1,5 +1,4 @@
 import React, { createContext, useCallback, useContext, useEffect, useReducer } from "react";
-import { createDefaultUserDataset, createSampleHistoryDatasets } from "@/utils/sampleDataset";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,6 +93,7 @@ export interface Dataset {
   id: string;
   name: string;
   uploadedAt: string;
+  isUserUploaded?: boolean;
   rawData: Record<string, unknown>[];
   cleanedData: Record<string, unknown>[];
   stats: DatasetStats;
@@ -130,12 +130,15 @@ type Action =
   | { type: "ADD_TO_HISTORY"; payload: Dataset }
   | { type: "DELETE_FROM_HISTORY"; payload: string }
   | { type: "LOAD_DATASET_FROM_HISTORY"; payload: string }
+  | { type: "CLEAR_DATASET" }
   | { type: "LOAD_FROM_STORAGE"; payload: Partial<SmartViewState> };
 
 // ─── Reducer ──────────────────────────────────────────────────────────────────
 
 function reducer(state: SmartViewState, action: Action): SmartViewState {
   switch (action.type) {
+    case "CLEAR_DATASET":
+      return { ...state, currentDataset: null };
     case "LOGIN":
       return { ...state, user: action.payload, isAuthenticated: true };
     case "LOGOUT":
@@ -204,6 +207,7 @@ export interface SmartViewContextType extends SmartViewState {
   login: (user: User) => void;
   logout: () => void;
   setDataset: (dataset: Dataset) => void;
+  clearDataset: () => void;
   updateDataset: (patch: Partial<Dataset>) => void;
   addToHistory: (dataset: Dataset) => void;
   loadDatasetFromHistory: (datasetId: string) => void;
@@ -253,35 +257,19 @@ export function SmartViewProvider({ children }: { children: React.ReactNode }) {
 
         if (storedDs) {
           const ds = JSON.parse(storedDs);
-          dispatch({ type: "SET_DATASET", payload: ds });
-
-          if (storedHist) {
-            dispatch({
-              type: "LOAD_FROM_STORAGE",
-              payload: { datasetHistory: JSON.parse(storedHist) },
-            });
-          } else {
-            createSampleHistoryDatasets(state.user.id, ds).then((historyList) => {
-              dispatch({
-                type: "LOAD_FROM_STORAGE",
-                payload: { datasetHistory: historyList },
-              });
-              localStorage.setItem(userHistoryKey, JSON.stringify(historyList));
-            });
-          }
-        } else {
-          // Initialize user's default secure dataset and sample history
-          createDefaultUserDataset(state.user.id, state.user.name || state.user.username).then((ds) => {
+          // Only rehydrate currentDataset if explicitly uploaded by the user!
+          if (ds && ds.isUserUploaded === true) {
             dispatch({ type: "SET_DATASET", payload: ds });
-            localStorage.setItem(userDatasetKey, JSON.stringify(ds));
+          } else {
+            // Remove legacy auto-generated dataset so user starts fresh
+            localStorage.removeItem(userDatasetKey);
+          }
+        }
 
-            createSampleHistoryDatasets(state.user!.id, ds).then((historyList) => {
-              dispatch({
-                type: "LOAD_FROM_STORAGE",
-                payload: { datasetHistory: historyList },
-              });
-              localStorage.setItem(userHistoryKey, JSON.stringify(historyList));
-            });
+        if (storedHist) {
+          dispatch({
+            type: "LOAD_FROM_STORAGE",
+            payload: { datasetHistory: JSON.parse(storedHist) },
           });
         }
       } catch (err) {
@@ -294,7 +282,7 @@ export function SmartViewProvider({ children }: { children: React.ReactNode }) {
 
   // Persist current dataset strictly under this user's isolated partition
   useEffect(() => {
-    if (state.user && state.currentDataset) {
+    if (state.user && state.currentDataset && state.currentDataset.isUserUploaded) {
       localStorage.setItem(`smartview_dataset_${state.user.id}`, JSON.stringify(state.currentDataset));
     }
   }, [state.user?.id, state.currentDataset]);
@@ -308,13 +296,38 @@ export function SmartViewProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback((user: User) => dispatch({ type: "LOGIN", payload: user }), []);
   const logout = useCallback(() => dispatch({ type: "LOGOUT" }), []);
-  const setDataset = useCallback((dataset: Dataset) => {
-    dispatch({ type: "SET_DATASET", payload: dataset });
-    dispatch({ type: "ADD_TO_HISTORY", payload: dataset });
-  }, []);
+  const setDataset = useCallback(
+    (dataset: Dataset) => {
+      const enriched = { ...dataset, isUserUploaded: true };
+      dispatch({ type: "SET_DATASET", payload: enriched });
+      dispatch({ type: "ADD_TO_HISTORY", payload: enriched });
+      if (state.user) {
+        localStorage.setItem(`smartview_dataset_${state.user.id}`, JSON.stringify(enriched));
+      }
+    },
+    [state.user]
+  );
+  const clearDataset = useCallback(() => {
+    dispatch({ type: "CLEAR_DATASET" });
+    if (state.user) {
+      localStorage.removeItem(`smartview_dataset_${state.user.id}`);
+    }
+  }, [state.user]);
   const updateDataset = useCallback((patch: Partial<Dataset>) => dispatch({ type: "UPDATE_DATASET", payload: patch }), []);
   const addToHistory = useCallback((dataset: Dataset) => dispatch({ type: "ADD_TO_HISTORY", payload: dataset }), []);
-  const loadDatasetFromHistory = useCallback((datasetId: string) => dispatch({ type: "LOAD_DATASET_FROM_HISTORY", payload: datasetId }), []);
+  const loadDatasetFromHistory = useCallback(
+    (datasetId: string) => {
+      const selected = state.datasetHistory.find((d) => d.id === datasetId);
+      if (selected) {
+        const enriched = { ...selected, isUserUploaded: true };
+        dispatch({ type: "SET_DATASET", payload: enriched });
+        if (state.user) {
+          localStorage.setItem(`smartview_dataset_${state.user.id}`, JSON.stringify(enriched));
+        }
+      }
+    },
+    [state.datasetHistory, state.user]
+  );
   const deleteFromHistory = useCallback((datasetId: string) => dispatch({ type: "DELETE_FROM_HISTORY", payload: datasetId }), []);
   const setAnalysisProgress = useCallback((progress: number) => dispatch({ type: "SET_ANALYSIS_PROGRESS", payload: progress }), []);
   const setIsAnalyzing = useCallback((isAnalyzing: boolean) => dispatch({ type: "SET_IS_ANALYZING", payload: isAnalyzing }), []);
@@ -327,6 +340,7 @@ export function SmartViewProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         setDataset,
+        clearDataset,
         updateDataset,
         addToHistory,
         loadDatasetFromHistory,

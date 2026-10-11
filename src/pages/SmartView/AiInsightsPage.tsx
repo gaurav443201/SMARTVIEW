@@ -3,13 +3,20 @@ import PageMeta from "../../components/common/PageMeta";
 import { useSmartView } from "../../context/SmartViewContext";
 import { generateOpenAiInsights, type OpenAiInsightsResponse } from "../../services/openAiService";
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 export default function AiInsightsPage() {
   const { currentDataset } = useSmartView();
   const [insights, setInsights] = useState<OpenAiInsightsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>("All");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!currentDataset) {
+      navigate("/upload", { replace: true });
+    }
+  }, [currentDataset, navigate]);
 
   useEffect(() => {
     if (currentDataset) {

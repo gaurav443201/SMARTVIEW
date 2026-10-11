@@ -165,64 +165,116 @@ const AppSidebar: React.FC = () => {
 
   const showLabel = isExpanded || isHovered || isMobileOpen;
 
+  const isItemDisabled = (path?: string) => {
+    if (!currentDataset) {
+      return path === "/smart-dashboard" || path === "/ai-insights" || path === "/reports";
+    }
+    return false;
+  };
+
   const renderItems = (items: NavItem[], type: "main" | "account") => (
     <ul className="flex flex-col gap-1">
-      {items.map((nav, index) => (
-        <li key={nav.name}>
-          {nav.subItems ? (
-            <>
-              <button
-                onClick={() => handleSubmenuToggle(index, type)}
-                className={`group menu-item ${openSubmenu?.type === type && openSubmenu?.index === index ? "menu-item-active" : "menu-item-inactive"} cursor-pointer ${!isExpanded && !isHovered ? "xl:justify-center" : "xl:justify-start"}`}
+      {items.map((nav, index) => {
+        const disabled = isItemDisabled(nav.path);
+
+        if (disabled) {
+          return (
+            <li key={nav.name}>
+              <div
+                role="button"
+                aria-disabled="true"
+                tabIndex={-1}
+                title="Upload dataset or PDF first to unlock"
+                className={`group menu-item opacity-45 cursor-not-allowed select-none bg-transparent hover:bg-transparent ${
+                  !isExpanded && !isHovered ? "xl:justify-center" : "xl:justify-start"
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
               >
-                <span className={`menu-item-icon-size ${openSubmenu?.type === type && openSubmenu?.index === index ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
+                <span className="menu-item-icon-size text-gray-400 dark:text-gray-500">
                   {nav.icon}
                 </span>
-                {showLabel && <span className="menu-item-text">{nav.name}</span>}
                 {showLabel && (
-                  <ChevronDownIcon className={`ms-auto h-5 w-5 transition-transform duration-200 ${openSubmenu?.type === type && openSubmenu?.index === index ? "rotate-180 text-brand-500" : ""}`} />
+                  <span className="menu-item-text text-gray-400 dark:text-gray-500">
+                    {nav.name}
+                  </span>
                 )}
-              </button>
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <div
-                  ref={(el) => { subMenuRefs.current[`${type}-${index}`] = el; }}
-                  className="overflow-hidden transition-all duration-300"
-                  style={{ height: openSubmenu?.type === type && openSubmenu?.index === index ? `${subMenuHeight[`${type}-${index}`]}px` : "0px" }}
+                {showLabel && (
+                  <span
+                    className="ms-auto flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                    title="Upload dataset or PDF first to unlock"
+                  >
+                    <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <span className="hidden xl:inline">Locked</span>
+                  </span>
+                )}
+              </div>
+            </li>
+          );
+        }
+
+        return (
+          <li key={nav.name}>
+            {nav.subItems ? (
+              <>
+                <button
+                  onClick={() => handleSubmenuToggle(index, type)}
+                  className={`group menu-item ${openSubmenu?.type === type && openSubmenu?.index === index ? "menu-item-active" : "menu-item-inactive"} cursor-pointer ${!isExpanded && !isHovered ? "xl:justify-center" : "xl:justify-start"}`}
                 >
-                  <ul className="ms-9 mt-2 space-y-1">
-                    {nav.subItems.map((sub) => (
-                      <li key={sub.name}>
-                        <Link
-                          to={sub.path}
-                          className={`menu-dropdown-item ${isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"}`}
-                        >
-                          {sub.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </>
-          ) : (
-            nav.path && (
-              <Link
-                to={nav.path}
-                className={`group menu-item ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}
-              >
-                <span className={`menu-item-icon-size ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
-                  {nav.icon}
-                </span>
-                {showLabel && <span className="menu-item-text">{nav.name}</span>}
-                {/* Dataset status dot for Dashboard and Upload */}
-                {showLabel && (nav.path === "/smart-dashboard" || nav.path === "/upload") && currentDataset && (
-                  <span className="ms-auto h-2 w-2 rounded-full bg-success-400" title="Dataset loaded" />
+                  <span className={`menu-item-icon-size ${openSubmenu?.type === type && openSubmenu?.index === index ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
+                    {nav.icon}
+                  </span>
+                  {showLabel && <span className="menu-item-text">{nav.name}</span>}
+                  {showLabel && (
+                    <ChevronDownIcon className={`ms-auto h-5 w-5 transition-transform duration-200 ${openSubmenu?.type === type && openSubmenu?.index === index ? "rotate-180 text-brand-500" : ""}`} />
+                  )}
+                </button>
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <div
+                    ref={(el) => { subMenuRefs.current[`${type}-${index}`] = el; }}
+                    className="overflow-hidden transition-all duration-300"
+                    style={{ height: openSubmenu?.type === type && openSubmenu?.index === index ? `${subMenuHeight[`${type}-${index}`]}px` : "0px" }}
+                  >
+                    <ul className="ms-9 mt-2 space-y-1">
+                      {nav.subItems.map((sub) => (
+                        <li key={sub.name}>
+                          <Link
+                            to={sub.path}
+                            className={`menu-dropdown-item ${isActive(sub.path) ? "menu-dropdown-item-active" : "menu-dropdown-item-inactive"}`}
+                          >
+                            {sub.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-              </Link>
-            )
-          )}
-        </li>
-      ))}
+              </>
+            ) : (
+              nav.path && (
+                <Link
+                  to={nav.path}
+                  className={`group menu-item ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"}`}
+                >
+                  <span className={`menu-item-icon-size ${isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"}`}>
+                    {nav.icon}
+                  </span>
+                  {showLabel && <span className="menu-item-text">{nav.name}</span>}
+                  {/* Dataset status dot for Dashboard and Upload */}
+                  {showLabel && (nav.path === "/smart-dashboard" || nav.path === "/upload") && currentDataset && (
+                    <span className="ms-auto h-2 w-2 rounded-full bg-success-400" title="Dataset loaded" />
+                  )}
+                </Link>
+              )
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 

@@ -24,6 +24,7 @@
     "jsvectormap": "^1.7.0",
     "leaflet": "^1.9.4",
     "maplibre-gl": "^6.8.0",
+    "pdfjs-dist": "^6.4.299",
     "prismjs": "^1.30.0",
     "react": "^19.2.7",
     "react-apexcharts": "^2.1.1",
