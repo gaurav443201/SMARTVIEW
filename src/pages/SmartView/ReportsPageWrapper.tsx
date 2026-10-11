@@ -1,6 +1,6 @@
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import PageMeta from "@/components/common/PageMeta";
-import ReportsPage from "@/components/smartview/reports/ReportsPage";
+import PageBreadCrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import ReportsPage from "../../components/smartview/reports/ReportsPage";
 
 export default function ReportsPageWrapper() {
   return (

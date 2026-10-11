@@ -1,6 +1,6 @@
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import PageMeta from "@/components/common/PageMeta";
-import DatasetUpload from "@/components/smartview/upload/DatasetUpload";
+import PageBreadCrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import DatasetUpload from "../../components/smartview/upload/DatasetUpload";
 
 export default function UploadPage() {
   return (

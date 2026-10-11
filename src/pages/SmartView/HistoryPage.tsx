@@ -1,7 +1,7 @@
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import PageMeta from "@/components/common/PageMeta";
-import { useSmartView, type Dataset } from "@/context/SmartViewContext";
-import { createSampleHistoryDatasets } from "@/utils/sampleDataset";
+import PageBreadCrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import { useSmartView, type Dataset } from "../../context/SmartViewContext";
+import { createSampleHistoryDatasets } from "../../utils/sampleDataset";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 

@@ -1,7 +1,7 @@
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import PageMeta from "@/components/common/PageMeta";
-import { useSmartView } from "@/context/SmartViewContext";
-import { generateOpenAiInsights, type OpenAiInsightsResponse } from "@/services/openAiService";
+import PageBreadCrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import { useSmartView } from "../../context/SmartViewContext";
+import { generateOpenAiInsights, type OpenAiInsightsResponse } from "../../services/openAiService";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 

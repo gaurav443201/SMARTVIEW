@@ -1,6 +1,6 @@
-import PageBreadCrumb from "@/components/common/PageBreadCrumb";
-import PageMeta from "@/components/common/PageMeta";
-import SmartDashboard from "@/components/smartview/dashboard/SmartDashboard";
+import PageBreadCrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import SmartDashboard from "../../components/smartview/dashboard/SmartDashboard";
 
 export default function SmartDashboardPage() {
   return (
